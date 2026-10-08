@@ -5,7 +5,7 @@ Experience orbs lying next to each other merge into one, and you pick up every o
 
 XP from a kill, a furnace, breeding or a bottle drops as a single orb holding the whole amount, and repeated drops at the same spot — a mob farm, for example — pile into that orb. Fewer orb entities means less clutter on screen and less work for the server.
 
-- **Orbs of any value merge** once a second when they touch or nearly touch. They never merge through a solid block.
+- **Orbs of any value merge** once a second when they touch or nearly touch. They never merge through a full block.
 - **No XP is lost** — the total never changes, and Mending repairs exactly as much as before. Very large totals are kept in at most two orbs so nothing is cut off when the world saves.
 - **Only vanilla experience orbs** are merged; orb-like entities added by other mods are left alone.
 - **Server side** — install it on the server (or in singleplayer); players joining don't need it. Nothing to configure.

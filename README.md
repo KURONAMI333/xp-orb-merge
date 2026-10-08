@@ -20,7 +20,7 @@ No dependencies (Fabric API not needed). Server side is enough; it is harmless o
 ## What it does
 
 - XP from a kill, a furnace, breeding or a bottle drops as a single orb holding the whole amount, instead of a spray of small ones. Repeated drops at the same spot (mob farms) pile into that one orb.
-- Orbs of any value that touch or nearly touch merge once a second (vanilla only merges orbs of the same value). Orbs never merge through a solid block.
+- Orbs of any value that touch or nearly touch merge once a second (vanilla only merges orbs of the same value). Orbs never merge through a full block.
 - Every orb within your reach is picked up in the same tick (vanilla takes one at a time).
 - The amount of XP never changes, and Mending repairs exactly as much as before. Very large totals are kept in at most two orbs so nothing is cut off when the world saves.
 - Only plain experience orbs are merged; orb-like entities from other mods are left alone.

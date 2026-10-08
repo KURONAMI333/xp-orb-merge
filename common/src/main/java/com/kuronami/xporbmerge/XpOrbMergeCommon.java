@@ -14,8 +14,8 @@ public final class XpOrbMergeCommon {
      * so if one is installed we stand down and leave orbs to it.
      */
     static final List<String> EQUIVALENT_MODS = List.of(
-            "clumps",        // Clumps (Jaredlll08)
-            "mr_ly_clumps"   // Clumps (ly, datapack-as-mod build)
+            "clumps",  // same-role mod id
+            "mr_ly_clumps"  // same-role mod id
     );
 
     /**
