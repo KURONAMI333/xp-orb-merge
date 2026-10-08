@@ -1,0 +1,1 @@
+Merge nearby experience orbs into one and collect every orb you touch at once, with no XP lost.
