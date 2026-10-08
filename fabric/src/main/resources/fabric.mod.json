@@ -9,6 +9,7 @@
     ],
     "contact": {
         "homepage": "https://www.curseforge.com/minecraft/mc-mods/xp-orb-merge",
+        "issues": "https://www.curseforge.com/minecraft/mc-mods/xp-orb-merge/comments",
         "sources": "https://github.com/KURONAMI333/xp-orb-merge"
     },
     "license": "${license}",

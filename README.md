@@ -10,9 +10,10 @@ Bugs and questions: comment on the CurseForge page, or DM @kuronami333 on X (htt
 
 ## Supported Loaders / Versions
 
-| Minecraft | NeoForge | Fabric |
-|---|:---:|:---:|
-| 1.21.1 | ✅ | ✅ |
+| Minecraft | NeoForge | Forge | Fabric |
+|---|:---:|:---:|:---:|
+| 1.21.1 | ✅ | — | ✅ |
+| 1.20.1 | — | ✅ | ✅ |
 
 No dependencies (Fabric API not needed). Server side is enough; it is harmless on clients.
 
@@ -25,12 +26,10 @@ No dependencies (Fabric API not needed). Server side is enough; it is harmless o
 - Only plain experience orbs are merged; orb-like entities from other mods are left alone.
 - Fewer orb entities means less work for the server and less clutter on screen. Nothing to configure.
 
-If Clumps is installed, this mod stays inactive and leaves orbs to Clumps, so the two never fight over the same orb.
-
 ## Installation
 
-1. Install NeoForge or Fabric Loader for Minecraft 1.21.1
-2. Drop the jar for your loader into `mods/`
+1. Install NeoForge (1.21.1), Forge (1.20.1) or Fabric Loader
+2. Drop the jar for your loader and Minecraft version into `mods/`
 
 ## License
 

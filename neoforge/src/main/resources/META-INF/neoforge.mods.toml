@@ -1,6 +1,7 @@
 modLoader = "javafml" #mandatory
 loaderVersion = "${neoforge_loader_version_range}" #mandatory
 license = "${license}" # Review your options at https://choosealicense.com/.
+issueTrackerURL="https://www.curseforge.com/minecraft/mc-mods/xp-orb-merge/comments"
 [[mods]] #mandatory
 modId = "${mod_id}" #mandatory
 version = "${version}" #mandatory

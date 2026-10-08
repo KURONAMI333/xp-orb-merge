@@ -1,6 +1,7 @@
 modLoader = "javafml" #mandatory
 loaderVersion = "${forge_loader_version_range}" #mandatory This is typically bumped every Minecraft version by Forge. See https://files.minecraftforge.net/ for a list of versions.
 license = "${license}" # Review your options at https://choosealicense.com/.
+issueTrackerURL="https://www.curseforge.com/minecraft/mc-mods/xp-orb-merge/comments"
 [[mods]] #mandatory
 modId = "${mod_id}" #mandatory
 version = "${version}" #mandatory
