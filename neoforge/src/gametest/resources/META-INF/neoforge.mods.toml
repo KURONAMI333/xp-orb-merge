@@ -1,0 +1,16 @@
+# Dev-only companion mod that holds the GameTests. Never shipped: neoforge/src/gametest is only on the
+# runGameTestServer classpath. Literal values only (processResources expansion covers main alone).
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "All Rights Reserved"
+[[mods]]
+modId = "xp_orb_merge_gametest"
+version = "0.0.0"
+displayName = "XP Orb Merge GameTests (dev only)"
+description = '''Holds the XP Orb Merge GameTests. Development only; never shipped.'''
+[[dependencies.xp_orb_merge_gametest]]
+modId = "xp_orb_merge"
+type = "required"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "BOTH"

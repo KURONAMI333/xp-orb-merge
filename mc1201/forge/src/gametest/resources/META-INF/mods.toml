@@ -1,0 +1,18 @@
+# Dev-only companion mod holding the GameTests. Never shipped (forge/src/gametest is only on the
+# runGameTestServer classpath). Literal values only.
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "All Rights Reserved"
+
+[[mods]]
+modId = "xp_orb_merge_gametest"
+version = "1"
+displayName = "xp_orb_merge GameTests (dev only)"
+description = "Development-only behavior tests."
+
+[[dependencies.xp_orb_merge_gametest]]
+modId = "xp_orb_merge"
+mandatory = true
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "SERVER"

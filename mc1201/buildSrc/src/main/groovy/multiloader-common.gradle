@@ -1,0 +1,222 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+base {
+    archivesName = "${mod_id}-${project.name}-${minecraft_version}"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories {
+    mavenCentral()
+    // https://docs.gradle.org/current/userguide/declaring_repositories.html#declaring_content_exclusively_found_in_one_repository
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Sponge'
+                url = 'https://repo.spongepowered.org/repository/maven-public'
+            }
+        }
+        filter { includeGroupAndSubgroups('org.spongepowered') }
+    }
+    exclusiveContent {
+        forRepositories(
+                maven {
+                    name = 'ParchmentMC'
+                    url = 'https://maven.parchmentmc.org/'
+                },
+                maven {
+                    name = "NeoForge"
+                    url = 'https://maven.neoforged.net/releases'
+                }
+        )
+        filter { includeGroup('org.parchmentmc.data') }
+    }
+    maven {
+        name = 'BlameJared'
+        url = 'https://maven.blamejared.com'
+    }
+}
+
+// Declare capabilities on the outgoing configurations.
+// Read more about capabilities here: https://docs.gradle.org/current/userguide/component_capabilities.html#sec:declaring-additional-capabilities-for-a-local-component
+['apiElements', 'runtimeElements', 'sourcesElements', 'javadocElements'].each { variant ->
+    configurations."$variant".outgoing {
+        capability("$group:${project.name}:$version")
+        capability("$group:${base.archivesName.get()}:$version")
+        capability("$group:$mod_id-${project.name}-${minecraft_version}:$version")
+        capability("$group:$mod_id:$version")
+    }
+    publishing.publications.configureEach {
+        suppressPomMetadataWarningsFor(variant)
+    }
+}
+
+sourcesJar {
+    from(rootProject.file('LICENSE')) {
+        rename { "${it}_${mod_name}" }
+    }
+}
+
+jar {
+    from(rootProject.file('LICENSE')) {
+        rename { "${it}_${mod_name}" }
+    }
+
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_name,
+                'Specification-Vendor'  : mod_author,
+                'Specification-Version' : project.jar.archiveVersion,
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.jar.archiveVersion,
+                'Implementation-Vendor' : mod_author,
+                'Built-On-Minecraft'    : minecraft_version
+        ])
+    }
+}
+
+// 出荷 jar にテスト足場が混ざっていないことの機械チェック。mc-26.2 セルと同一の判定。
+// テスト足場は利用者の環境に無関係なので配らない。26.x では実害も出る
+// (GameTest が実レジストリ minecraft:test_instance に載り、クライアント join の
+// configuration フェーズの同期で直列化に失敗してワールド生成が終わらない)。
+// クラス名だけでなく gametest フレームワークへの参照 (定数プール) と
+// gametest 用の structure も見る。
+tasks.register('verifyNoTestScaffoldingInJar') {
+    group = 'verification'
+    description = 'Fails if a shipped jar contains GameTest scaffolding (classes, framework references or test structures).'
+
+    // loom は jar (dev) と remapJar (出荷) を別々に作るので、存在するものを全部見る。
+    // 遅延解決: この plugin は loom より先に適用されるため、登録時点では remapJar がまだ無い。
+    var archiveTasks = tasks.matching { it.name == 'jar' || it.name == 'remapJar' }
+    dependsOn(archiveTasks)
+    inputs.files(project.provider { archiveTasks.collect { it.archiveFile.get().asFile } })
+    var stamp = layout.buildDirectory.file("reports/no-test-scaffolding/${project.name}.txt")
+    outputs.file(stamp)
+
+    doLast {
+        // クラスファイルの定数プールに現れる参照 (UTF-8 のまま生バイトに入る)。
+        var forbiddenReferences = [
+                'net/minecraft/gametest',
+                'RegisterGameTestsEvent',
+                'GameTestInstance',
+                'GameTestHelper',
+                'TEST_INSTANCE'
+        ]
+        var testClassPattern = java.util.regex.Pattern.compile('.*/[A-Za-z0-9_$]*Tests?([$][^/]*)?[.]class')
+        var testDirPattern = java.util.regex.Pattern.compile('(?i)(.*/)?tests?/.*')
+        var structurePattern = java.util.regex.Pattern.compile('data/[^/]+/structure/.*')
+        var scan = { File archive ->
+            var offences = []
+            new java.util.zip.ZipFile(archive).withCloseable { zip ->
+                zip.entries().each { entry ->
+                    if (entry.directory) {
+                        return
+                    }
+                    var name = entry.name
+                    if (name.toLowerCase(Locale.ROOT).contains('gametest')) {
+                        offences.add(name + '  (entry name)')
+                    } else if (testDirPattern.matcher(name).matches()) {
+                        offences.add(name + '  (test directory)')
+                    } else if (testClassPattern.matcher(name).matches()) {
+                        offences.add(name + '  (test class name)')
+                    } else if (structurePattern.matcher(name).matches()) {
+                        // data/<ns>/structure/ は GameTest の構造テンプレート置き場
+                        // (ワールド生成の構造は data/<ns>/worldgen/structure/)。
+                        offences.add(name + '  (gametest structure template)')
+                    } else if (name.endsWith('.class')) {
+                        var bytes = zip.getInputStream(entry).withCloseable { it.readAllBytes() }
+                        var text = new String(bytes, java.nio.charset.StandardCharsets.ISO_8859_1)
+                        var hit = forbiddenReferences.find { text.contains(it) }
+                        if (hit != null) {
+                            offences.add(name + '  (references ' + hit + ')')
+                        }
+                    }
+                }
+            }
+            return offences
+        }
+
+        var lines = []
+        var failures = []
+        archiveTasks.each { archiveTask ->
+            var archive = archiveTask.archiveFile.get().asFile
+            var offences = scan(archive)
+            if (offences.isEmpty()) {
+                lines.add('OK ' + archive.name + ': no test scaffolding')
+            } else {
+                lines.add('FAIL ' + archive.name)
+                offences.each { lines.add('  ' + it) }
+                failures.add(archive.name + ' ships test scaffolding:' + System.lineSeparator()
+                        + offences.collect { '  - ' + it }.join(System.lineSeparator()))
+            }
+        }
+        var stampFile = stamp.get().asFile
+        stampFile.parentFile.mkdirs()
+        stampFile.text = lines.join(System.lineSeparator()) + System.lineSeparator()
+        if (failures.isEmpty()) {
+            var names = archiveTasks.collect { it.archiveFile.get().asFile.name }.join(', ')
+            logger.lifecycle('verifyNoTestScaffoldingInJar: OK — ' + project.path + ' (' + names + ')')
+        } else {
+            throw new GradleException(failures.join(System.lineSeparator()))
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('verifyNoTestScaffoldingInJar')
+}
+
+processResources {
+    var expandProps = [
+            'version'                      : version,
+            'group'                        : project.group, //Else we target the task's group.
+            'minecraft_version'            : minecraft_version,
+            'minecraft_version_range'      : minecraft_version_range,
+            'fabric_version'               : fabric_version,
+            'fabric_loader_version'        : fabric_loader_version,
+            'mod_name'                     : mod_name,
+            'mod_author'                   : mod_author,
+            'mod_id'                       : mod_id,
+            'license'                      : license,
+            'description'                  : project.description,
+            "forge_version": forge_version,
+            "forge_loader_version_range": forge_loader_version_range,
+            'credits'                      : credits,
+            'java_version'                 : java_version
+    ]
+
+    var jsonExpandProps = expandProps.collectEntries {
+        key, value -> [(key): value instanceof String ? value.replace("\n", "\\\\n") : value]
+    }
+
+    filesMatching(['META-INF/mods.toml']) {
+        expand expandProps
+    }
+
+    filesMatching(['pack.mcmeta', 'fabric.mod.json', '*.mixins.json']) {
+        expand jsonExpandProps
+    }
+
+    inputs.properties(expandProps)
+}
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            artifactId base.archivesName.get()
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url System.getenv('local_maven_url')
+        }
+    }
+}

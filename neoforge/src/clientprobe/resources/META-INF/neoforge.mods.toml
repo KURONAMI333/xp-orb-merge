@@ -1,0 +1,15 @@
+# Dev-only client probe. Never shipped: neoforge/src/clientprobe is only on the runProbeClient classpath.
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "All Rights Reserved"
+[[mods]]
+modId = "xp_orb_merge_clientprobe"
+version = "0.0.0"
+displayName = "XP Orb Merge client probe (dev only)"
+description = '''Creates a world, drops experience near the player and records what happened. Development only.'''
+[[dependencies.xp_orb_merge_clientprobe]]
+modId = "xp_orb_merge"
+type = "required"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "CLIENT"

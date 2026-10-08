@@ -1,0 +1,105 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev.legacyforge'
+}
+
+sourceSets {
+    // Dev-only GameTests: not part of the shipped jar.
+    gametest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    localRuntime
+    runtimeClasspath.extendsFrom localRuntime
+    gametestRuntimeClasspath.extendsFrom localRuntime
+}
+
+obfuscation {
+    // Published Forge mods use SRG names; the development game uses official names.
+    createRemappingConfiguration(configurations.localRuntime)
+}
+
+mixin {
+    add(sourceSets.main, "${mod_id}.refmap.json")
+
+    config("${mod_id}.mixins.json")
+    config("${mod_id}.forge.mixins.json")
+}
+
+legacyForge {
+    version = "${minecraft_version}-${forge_version}"
+
+    validateAccessTransformers = true
+
+    def at = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (at.exists()) {
+        accessTransformers = ["src/main/resources/META-INF/accesstransformer.cfg"]
+    }
+    parchment {
+        minecraftVersion = parchment_minecraft
+        mappingsVersion = parchment_version
+    }
+    addModdingDependenciesTo sourceSets.gametest
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+        "${mod_id}_gametest" {
+            sourceSet sourceSets.gametest
+        }
+    }
+    runs {
+        configureEach {
+            systemProperty('forge.enabledGameTestNamespaces', mod_id)
+            loadedMods = [project.legacyForge.mods.getByName(mod_id)]
+        }
+        // Headless behaviour tests: ./gradlew :forge:runGameTestServer
+        gameTestServer {
+            type = 'gameTestServer'
+            sourceSet = sourceSets.gametest
+            loadedMods = [project.legacyForge.mods.getByName(mod_id),
+                          project.legacyForge.mods.getByName("${mod_id}_gametest")]
+        }
+        client {
+            client()
+        }
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+        server {
+            server()
+        }
+    }
+
+}
+
+sourceSets.main.resources.srcDir 'src/generated/resources'
+
+dependencies {
+    compileOnly project(":common")
+    annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
+}
+
+jar {
+    finalizedBy('reobfJar')
+    manifest.attributes([
+            "MixinConfigs": "${mod_id}.mixins.json,${mod_id}.forge.mixins.json"
+    ])
+}
+
+// Same-feature mod id probe: ./gradlew :forge:runGameTestServer -PcoexistJar=/abs/path/dummy.jar
+// The GameTests then expect this mod to stand down. Add -PcoexistControl to keep normal expectations.
+// Meant for a code-free (lowcodefml) jar that only declares the other mod's id: real published jars are
+// not remapped to dev names here and crash. Check real jars on a production server instead.
+if (project.hasProperty('coexistJar')) {
+    def coexist = file(project.property('coexistJar'))
+    repositories { flatDir { dirs coexist.parentFile } }
+    dependencies { modLocalRuntime ":${coexist.name - '.jar'}" }
+    if (!project.hasProperty('coexistControl')) {
+        legacyForge.runs.configureEach { systemProperty('xp_orb_merge.expectInactive', 'true') }
+    }
+}
