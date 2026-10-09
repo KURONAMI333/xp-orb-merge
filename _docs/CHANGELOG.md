@@ -11,4 +11,4 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) — [Semver](ht
 - Nearby experience orbs merge into one, and every orb within reach is collected in the same tick
 
 ### Notes
-- Minecraft 1.21.1 NeoForge / Fabric and 1.20.1 Forge / Fabric, all as 0.1.0
+- Minecraft 1.21.1 NeoForge

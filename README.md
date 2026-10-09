@@ -10,12 +10,11 @@ Bugs and questions: comment on the CurseForge page, or DM @kuronami333 on X (htt
 
 ## Supported Loaders / Versions
 
-| Minecraft | NeoForge | Forge | Fabric |
-|---|:---:|:---:|:---:|
-| 1.21.1 | ✅ | — | ✅ |
-| 1.20.1 | — | ✅ | ✅ |
+| Minecraft | NeoForge |
+|---|:---:|
+| 1.21.1 | ✅ |
 
-No dependencies (Fabric API not needed). Server side is enough; it is harmless on clients.
+No dependencies. Server side is enough; it is harmless on clients.
 
 ## What it does
 
@@ -28,8 +27,8 @@ No dependencies (Fabric API not needed). Server side is enough; it is harmless o
 
 ## Installation
 
-1. Install NeoForge (1.21.1), Forge (1.20.1) or Fabric Loader
-2. Drop the jar for your loader and Minecraft version into `mods/`
+1. Install NeoForge for Minecraft 1.21.1
+2. Drop the jar into `mods/`
 
 ## License
 
